@@ -38,14 +38,37 @@ git clone https://github.com/Dip-Kishor/JWTInAspNetCore.git
 cd JWTInAspNetCore
 ```
 
-3. Setup data
+3. Create appsettings.json file in directory, add following codes and fill required fields.
+```sh
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": 
+  {"JWTContext":"Server=localhost\\SQLEXPRESS;Database=JWTContext;user=your_username;password=your_password;connect timeout=500;TrustServerCertificate=True;"},
+  "AccessToken":{
+    "Key": "Your_Own_key",
+    "Issuer": "https://localhost:port",
+    "Audience": "https://localhost:port"
+  },
+  "RefreshToken":{
+    "Key": "Your_own_refresh_token"
+  }
+}
+
+``` 
+4. Setup data
 
 ```sh
 dotnet ef database update
 ```
 >**Note**: Make sure to use your own sql server Username and Password in connection string.
 
-4. Run the application
+5. Run the application
 
 ```sh
 dotnet run
