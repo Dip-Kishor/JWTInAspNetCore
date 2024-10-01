@@ -116,8 +116,8 @@ namespace JWTInAspNetCore.Services
             getUser.RefreshToken = refreshToken;
             await _userManager.UpdateAsync(getUser);
 
-            SetTokenCookie("accessToken", accessToken!, TimeSpan.FromMinutes(1.5));
-            SetTokenCookie("refreshToken", refreshToken!, TimeSpan.FromMinutes(3));
+            SetTokenCookie("accessToken", accessToken!);
+            SetTokenCookie("refreshToken", refreshToken!);
             return new LoginResponse(true, accessToken, refreshToken, "Logged in succesfully");
         }
 
@@ -175,14 +175,14 @@ namespace JWTInAspNetCore.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        private void SetTokenCookie(string key, string token, TimeSpan timeSpan)
+        private void SetTokenCookie(string key, string token)
         {
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.Add(timeSpan)
+                // Expires = DateTime.UtcNow.Add(timeSpan)
             };
             _httpContextAccessor.HttpContext.Response.Cookies.Append(key, token, cookieOptions);
         }

@@ -27,43 +27,43 @@ namespace JWTInAspNetCore.Middleware
             _logger = logger;
             _next = next;
         }
-        public async Task InvokeAsync(HttpContext context,IServiceProvider serviceProvider)
+        public async Task InvokeAsync(HttpContext context, IServiceProvider serviceProvider)
         {
-            if(context.Request.Cookies.TryGetValue("accessToken",out var token))
+            if (context.Request.Cookies.TryGetValue("accessToken", out var token))
             {
                 var accessTokenHandler = new JwtSecurityTokenHandler();
                 try
                 {
                     var accessToken = accessTokenHandler.ReadJwtToken(token);
                     //if token is expired try to get new token
-                    if(accessToken.ValidTo< DateTime.UtcNow)
+                    if (accessToken.ValidTo < DateTime.UtcNow)
                     {
                         _logger.LogInformation("Access Token expired, trying to get new one");
-                        if(context.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+                        if (context.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
                         {
                             var refreshTokenHandler = new JwtSecurityTokenHandler();
-                            var refToken =refreshTokenHandler.ReadJwtToken(refreshToken);
-                            if(refToken.ValidTo > DateTime.UtcNow)
+                            var refToken = refreshTokenHandler.ReadJwtToken(refreshToken);
+                            if (refToken.ValidTo > DateTime.UtcNow)
                             {
                                 // _logger.LogInformation("Refreshtoken is not expired");
                                 var emailClaim = refToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-                                if(!string.IsNullOrEmpty(emailClaim))
+                                if (!string.IsNullOrEmpty(emailClaim))
                                 {
                                     _logger.LogInformation("Refresh token is valid. Generating new tokens.");
-                                    using(var scope = serviceProvider.CreateScope())
+                                    using (var scope = serviceProvider.CreateScope())
                                     {
                                         var dbContext = scope.ServiceProvider.GetRequiredService<JWTContext>();
 
                                         //query to the database
                                         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
                                         var getUser = await userManager.FindByEmailAsync(emailClaim);
-                                        if(getUser != null)
+                                        if (getUser != null)
                                         {
                                             var getRoles = await userManager.GetRolesAsync(getUser);
-                                            var userSession = new UserSession(getUser.Id,getUser.UserName,getUser.Email!,getRoles.First());
+                                            var userSession = new UserSession(getUser.Id, getUser.UserName, getUser.Email!, getRoles.First());
 
                                             var newAccessToken = GenerateAccessToken(userSession);
-                                            SetTokenCookie("accessToken",newAccessToken,TimeSpan.FromMinutes(1.5));
+                                            SetTokenCookie("accessToken", newAccessToken);
                                         }
                                         else
                                         {
@@ -83,7 +83,7 @@ namespace JWTInAspNetCore.Middleware
                         }
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogError($"Token renewal failed: {ex.Message}");
                 }
@@ -112,14 +112,13 @@ namespace JWTInAspNetCore.Middleware
             );
             return new JwtSecurityTokenHandler().WriteToken(accessToken);
         }
-        private void SetTokenCookie(string key, string token, TimeSpan timeSpan)
+        private void SetTokenCookie(string key, string token)
         {
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.Add(timeSpan)
             };
             _httpContextAccessor.HttpContext.Response.Cookies.Append(key, token, cookieOptions);
         }
